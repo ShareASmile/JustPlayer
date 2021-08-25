@@ -13,6 +13,7 @@ import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.LinkedHashMap;
+import java.util.Set;
 
 class Prefs {
 
@@ -52,6 +53,9 @@ class Prefs {
     public boolean autoPiP = false;
 
     private LinkedHashMap positions;
+
+    public boolean persistentMode = true;
+    public long nonPersitentPosition = -1L;
 
     public Prefs(Context context) {
         mContext = context;
@@ -101,28 +105,32 @@ class Prefs {
             }
         }
 
-        final SharedPreferences.Editor sharedPreferencesEditor = mSharedPreferences.edit();
-        if (mediaUri == null)
-            sharedPreferencesEditor.remove(PREF_KEY_MEDIA_URI);
-        else
-            sharedPreferencesEditor.putString(PREF_KEY_MEDIA_URI, mediaUri.toString());
-        if (mediaType == null)
-            sharedPreferencesEditor.remove(PREF_KEY_MEDIA_TYPE);
-        else
-            sharedPreferencesEditor.putString(PREF_KEY_MEDIA_TYPE, mediaType);
-        sharedPreferencesEditor.commit();
+        if (persistentMode) {
+            final SharedPreferences.Editor sharedPreferencesEditor = mSharedPreferences.edit();
+            if (mediaUri == null)
+                sharedPreferencesEditor.remove(PREF_KEY_MEDIA_URI);
+            else
+                sharedPreferencesEditor.putString(PREF_KEY_MEDIA_URI, mediaUri.toString());
+            if (mediaType == null)
+                sharedPreferencesEditor.remove(PREF_KEY_MEDIA_TYPE);
+            else
+                sharedPreferencesEditor.putString(PREF_KEY_MEDIA_TYPE, mediaType);
+            sharedPreferencesEditor.commit();
+        }
     }
 
     public void updateSubtitle(final Uri uri) {
         subtitleUri = uri;
         subtitleTrack = -1;
-        final SharedPreferences.Editor sharedPreferencesEditor = mSharedPreferences.edit();
-        if (uri == null)
-            sharedPreferencesEditor.remove(PREF_KEY_SUBTITLE_URI);
-        else
-            sharedPreferencesEditor.putString(PREF_KEY_SUBTITLE_URI, uri.toString());
-        sharedPreferencesEditor.remove(PREF_KEY_SUBTITLE_TRACK);
-        sharedPreferencesEditor.commit();
+        if (persistentMode) {
+            final SharedPreferences.Editor sharedPreferencesEditor = mSharedPreferences.edit();
+            if (uri == null)
+                sharedPreferencesEditor.remove(PREF_KEY_SUBTITLE_URI);
+            else
+                sharedPreferencesEditor.putString(PREF_KEY_SUBTITLE_URI, uri.toString());
+            sharedPreferencesEditor.remove(PREF_KEY_SUBTITLE_TRACK);
+            sharedPreferencesEditor.commit();
+        }
     }
 
     public void updatePosition(final long position) {
@@ -132,8 +140,12 @@ class Prefs {
         while (positions.size() > 100)
             positions.remove(positions.keySet().toArray()[0]);
 
-        positions.put(mediaUri.toString(), position);
-        savePositions();
+        if (persistentMode) {
+            positions.put(mediaUri.toString(), position);
+            savePositions();
+        } else {
+            nonPersitentPosition = position;
+        }
     }
 
     public void updateBrightness(final int brightness) {
@@ -185,11 +197,34 @@ class Prefs {
     }
 
     public long getPosition() {
+        if (!persistentMode) {
+            return nonPersitentPosition;
+        }
+
         Object val = positions.get(mediaUri.toString());
-        if (val == null)
-            return 0L;
-        else
+        if (val != null)
             return (long) val;
+
+        // Return position for uri from limited scope (loaded after using Next action)
+        if (ContentResolver.SCHEME_CONTENT.equals(mediaUri.getScheme())) {
+            final String searchPath = SubtitleUtils.getTrailPathFromUri(mediaUri);
+            if (searchPath == null || searchPath.length() < 1)
+                return 0L;
+            final Set<String> keySet = positions.keySet();
+            final Object[] keys = keySet.toArray();
+            for (int i = keys.length; i > 0; i--) {
+                final String key = (String) keys[i - 1];
+                final Uri uri = Uri.parse(key);
+                if (ContentResolver.SCHEME_CONTENT.equals(uri.getScheme())) {
+                    final String keyPath = SubtitleUtils.getTrailPathFromUri(uri);
+                    if (searchPath.equals(keyPath)) {
+                        return (long) positions.get(key);
+                    }
+                }
+            }
+        }
+
+        return 0L;
     }
 
     public void updateOrientation() {
@@ -204,22 +239,24 @@ class Prefs {
         this.subtitleTrack = subtitleTrack;
         this.resizeMode = resizeMode;
         this.scale = scale;
-        final SharedPreferences.Editor sharedPreferencesEditor = mSharedPreferences.edit();
-        if (audioTrack == -1)
-            sharedPreferencesEditor.remove(PREF_KEY_AUDIO_TRACK);
-        else
-            sharedPreferencesEditor.putInt(PREF_KEY_AUDIO_TRACK, audioTrack);
-        if (audioTrackFfmpeg == -1)
-            sharedPreferencesEditor.remove(PREF_KEY_AUDIO_TRACK_FFMPEG);
-        else
-            sharedPreferencesEditor.putInt(PREF_KEY_AUDIO_TRACK_FFMPEG, audioTrackFfmpeg);
-        if (subtitleTrack == -1)
-            sharedPreferencesEditor.remove(PREF_KEY_SUBTITLE_TRACK);
-        else
-            sharedPreferencesEditor.putInt(PREF_KEY_SUBTITLE_TRACK, subtitleTrack);
-        sharedPreferencesEditor.putInt(PREF_KEY_RESIZE_MODE, resizeMode);
-        sharedPreferencesEditor.putFloat(PREF_KEY_SCALE, scale);
-        sharedPreferencesEditor.commit();
+        if (persistentMode) {
+            final SharedPreferences.Editor sharedPreferencesEditor = mSharedPreferences.edit();
+            if (audioTrack == -1)
+                sharedPreferencesEditor.remove(PREF_KEY_AUDIO_TRACK);
+            else
+                sharedPreferencesEditor.putInt(PREF_KEY_AUDIO_TRACK, audioTrack);
+            if (audioTrackFfmpeg == -1)
+                sharedPreferencesEditor.remove(PREF_KEY_AUDIO_TRACK_FFMPEG);
+            else
+                sharedPreferencesEditor.putInt(PREF_KEY_AUDIO_TRACK_FFMPEG, audioTrackFfmpeg);
+            if (subtitleTrack == -1)
+                sharedPreferencesEditor.remove(PREF_KEY_SUBTITLE_TRACK);
+            else
+                sharedPreferencesEditor.putInt(PREF_KEY_SUBTITLE_TRACK, subtitleTrack);
+            sharedPreferencesEditor.putInt(PREF_KEY_RESIZE_MODE, resizeMode);
+            sharedPreferencesEditor.putFloat(PREF_KEY_SCALE, scale);
+            sharedPreferencesEditor.commit();
+        }
     }
 
     public void updateScope(final Uri uri) {
@@ -239,4 +276,9 @@ class Prefs {
         sharedPreferencesEditor.commit();
         return autoPiP;
     }
+
+    public void setPersistent(boolean persistentMode) {
+        this.persistentMode = persistentMode;
+    }
+
 }

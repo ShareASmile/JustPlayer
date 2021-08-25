@@ -1,10 +1,18 @@
 package com.brouken.player;
 
+import static android.content.Context.UI_MODE_SERVICE;
+
+import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.UiModeManager;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.media.AudioManager;
@@ -14,6 +22,7 @@ import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.OpenableColumns;
 import android.util.Log;
+import android.util.Rational;
 import android.view.Display;
 import android.view.View;
 import android.view.Window;
@@ -21,6 +30,8 @@ import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.Toast;
+
+import androidx.documentfile.provider.DocumentFile;
 
 import com.arthenica.ffmpegkit.FFmpegKitConfig;
 import com.arthenica.ffmpegkit.FFprobeKit;
@@ -45,7 +56,7 @@ class Utils {
     }
 
     public static boolean fileExists(final Context context, final Uri uri) {
-        if ("file".equals(uri.getScheme())) {
+        if (ContentResolver.SCHEME_FILE.equals(uri.getScheme())) {
             final File file = new File(uri.getPath());
             return file.exists();
         } else {
@@ -196,6 +207,7 @@ class Utils {
         }
     }
 
+    @SuppressLint("SourceLockedOrientationActivity")
     public static void setOrientation(Activity activity, Orientation orientation) {
         switch (orientation) {
             case VIDEO:
@@ -241,6 +253,13 @@ class Utils {
         }
     }
 
+    public static Rational getRational(final Format format) {
+        if (isRotated(format))
+            return new Rational(format.height, format.width);
+        else
+            return new Rational(format.width, format.height);
+    }
+
     public static String formatMilis(long time) {
         final int totalSeconds = Math.abs((int) time / 1000);
         final int seconds = totalSeconds % 60;
@@ -263,12 +282,15 @@ class Utils {
         }
     }
 
-    public static void setViewParams(final View view, int paddingLeft, int paddingTop, int paddingRight, int paddingBottom, int marginLeft, int marginTop, int marginRight, int marginBottom) {
-        view.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom);
-
+    public static void setViewMargins(final View view, int marginLeft, int marginTop, int marginRight, int marginBottom) {
         final FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams) view.getLayoutParams();
         layoutParams.setMargins(marginLeft, marginTop, marginRight, marginBottom);
         view.setLayoutParams(layoutParams);
+    }
+
+    public static void setViewParams(final View view, int paddingLeft, int paddingTop, int paddingRight, int paddingBottom, int marginLeft, int marginTop, int marginRight, int marginBottom) {
+        view.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom);
+        setViewMargins(view, marginLeft, marginTop, marginRight, marginBottom);
     }
 
     public static boolean isDeletable(final Context context, final Uri uri) {
@@ -283,6 +305,16 @@ class Utils {
                         }
                     }
                 }
+            } else if (ContentResolver.SCHEME_FILE.equals(uri.getScheme())) {
+                if (Build.VERSION.SDK_INT >= 23) {
+                    boolean hasPermission = context.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                            == PackageManager.PERMISSION_GRANTED;
+                    if (!hasPermission) {
+                        return false;
+                    }
+                }
+                final File file = new File(uri.getSchemeSpecificPart());
+                return file.canWrite();
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -295,8 +327,33 @@ class Utils {
         return scheme.startsWith("http") || scheme.equals("rtsp");
     }
 
-    public static boolean isTvBox(Activity activity) {
-        return activity.getResources().getBoolean(R.bool.tv_box);
+    public static boolean isTvBox(Context context) {
+        // TV for sure
+        UiModeManager uiModeManager = (UiModeManager) context.getSystemService(UI_MODE_SERVICE);
+        if (uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
+            return true;
+        }
+
+        // Android box (non Android TV) or phone connected to external display (desktop mode)
+
+        if (Build.VERSION.SDK_INT < 29) {
+            // Most likely not a box
+            if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN)) {
+                return false;
+            }
+
+            // Missing Files app (DocumentsUI) means box
+            // Some boxes have non functional app or stub (!)
+            final Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.setType("video/*");
+            if (intent.resolveActivity(context.getPackageManager()) == null) {
+                return true;
+            }
+        }
+
+        // Default: No TV - use SAF
+        return false;
     }
 
     public static int normRate(float rate) {
@@ -342,7 +399,7 @@ class Utils {
             if (BuildConfig.DEBUG)
                 Toast.makeText(activity, "Video frameRate: " + frameRate, Toast.LENGTH_LONG).show();
 
-            if (frameRate != Format.NO_VALUE) {
+            if (frameRate > 0) {
                 Display display = activity.getWindow().getDecorView().getDisplay();
                 Display.Mode[] supportedModes = display.getSupportedModes();
                 Display.Mode activeMode = display.getMode();
@@ -418,8 +475,9 @@ class Utils {
                     @Override
                     public void onChoosePath(String path, File pathFile) {
                         activity.releasePlayer();
-                        Uri uri = Uri.parse(pathFile.toURI().toString());
+                        Uri uri = DocumentFile.fromFile(pathFile).getUri();
                         if (video) {
+                            activity.mPrefs.setPersistent(true);
                             activity.mPrefs.updateMedia(activity, uri, null);
                             activity.searchSubtitles();
                         } else {

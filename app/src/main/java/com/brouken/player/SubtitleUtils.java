@@ -1,5 +1,6 @@
 package com.brouken.player;
 
+import android.content.ContentResolver;
 import android.content.Context;
 import android.net.Uri;
 
@@ -106,7 +107,12 @@ class SubtitleUtils {
             } else {
                 //if (doc.length() == file.length() && doc.lastModified() == file.lastModified() && doc.getName().equals(file.getName())) {
                 // lastModified is zero when opened from Solid Explorer
-                if (doc.length() == file.length() && doc.getName().equals(file.getName())) {
+                final String docName = doc.getName();
+                final String fileName = file.getName();
+                if (docName == null || fileName == null) {
+                    continue;
+                }
+                if (doc.length() == file.length() && docName.equals(fileName)) {
                     return file;
                 }
             }
@@ -114,14 +120,24 @@ class SubtitleUtils {
         return null;
     }
 
-    public static String[] getTrailFromUri(Uri uri) {
+    public static String getTrailPathFromUri(Uri uri) {
         String path = uri.getPath();
         String[] array = path.split(":");
         if (array.length > 1) {
-            path = array[array.length - 1];
-            return path.split("/");
+            return array[array.length - 1];
+        } else {
+            return path;
         }
-        return new String[]{};
+    }
+
+    public static String[] getTrailFromUri(Uri uri) {
+        if ("org.courville.nova.provider".equals(uri.getHost()) && ContentResolver.SCHEME_CONTENT.equals(uri.getScheme())) {
+            String path = uri.getPath();
+            if (path.startsWith("/external_files/")) {
+                return path.substring("/external_files/".length()).split("/");
+            }
+        }
+        return getTrailPathFromUri(uri).split("/");
     }
 
     private static String getFileBaseName(String name) {
@@ -145,6 +161,8 @@ class SubtitleUtils {
         List<DocumentFile> candidates = new ArrayList<>();
 
         for (DocumentFile file : dir.listFiles()) {
+            if (file.getName().startsWith("."))
+                continue;
             if (isSubtitleFile(file))
                 candidates.add(file);
             if (isVideoFile(file))

@@ -3,9 +3,10 @@
 [![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/moneytoo/Player.svg?logo=github&label=GitHub)](https://github.com/moneytoo/Player/releases/latest)
 [![Google Play](https://img.shields.io/endpoint?label=Google%20Play&logo=google-play&color=green&cacheSeconds=65536&url=https%3A%2F%2Fplayshields.herokuapp.com%2Fplay%3Fi%3Dcom.brouken.player%26l%3DGoogle%2520Play%26m%3Dv%24version)](https://play.google.com/store/apps/details?id=com.brouken.player)
 [![F-Droid](https://img.shields.io/f-droid/v/com.brouken.player.svg?logo=f-droid&label=F-Droid)](https://f-droid.org/packages/com.brouken.player/)
-[![GitHub all releases](https://img.shields.io/github/downloads/moneytoo/Player/total)](https://github.com/moneytoo/Player/releases/latest)
-[![GitHub release (latest by date)](https://img.shields.io/github/downloads/moneytoo/Player/latest/total)](https://github.com/moneytoo/Player/releases/latest)
-[![ExoPlayer](https://img.shields.io/badge/ExoPlayer-v2.14.1-007ec6)](https://github.com/google/ExoPlayer)
+[![GitHub all releases](https://img.shields.io/github/downloads/moneytoo/Player/total?logo=github)](https://github.com/moneytoo/Player/releases/latest)
+[![Google Play](https://img.shields.io/endpoint?color=green&logo=google-play&url=https%3A%2F%2Fplayshields.herokuapp.com%2Fplay%3Fi%3Dcom.brouken.player%26l%3Ddownloads%26m%3D%24installs)](https://play.google.com/store/apps/details?id=com.brouken.player)
+[![Google Play](https://img.shields.io/endpoint?color=green&logo=google-play&url=https%3A%2F%2Fplayshields.herokuapp.com%2Fplay%3Fi%3Dcom.brouken.player%26l%3Drating%26m%3D%24rating%252F5)](https://play.google.com/store/apps/details?id=com.brouken.player)
+[![ExoPlayer](https://img.shields.io/badge/ExoPlayer-v2.15.0-007ec6)](https://github.com/google/ExoPlayer)
 [![Translation Status](https://hosted.weblate.org/widgets/just-player/-/svg-badge.svg)](https://hosted.weblate.org/engage/just-player/)
 
 Android video player based on [ExoPlayer](https://github.com/google/ExoPlayer), compatible with Android 5+ and Android TV.
@@ -40,6 +41,7 @@ HDR (HDR10+ and Dolby Vision) video playback on compatible/supported hardware.
  * Volume boost
  * Auto frame rate matching on Android TV/boxes (Android 6+)
  * Post-playback actions (delete file/skip to next)
+ * Touch lock (long tap)
  * No ads, tracking or excessive permissions
 
 To load external (non-embedded) subtitles, long press the file open action in the bottom bar. The first time you do that, you will be offered to select root video folder to enable automatic loading of external subtitles.
@@ -88,6 +90,13 @@ Install app like [MediaInfo](https://play.google.com/store/apps/details?id=net.m
 ### I want to automatically activate PiP mode when leaving the player...
 
 There as a hidden feature - Auto PiP. Long press the PiP icon to activate this feature. Then, when you leave Just Player through the home button and video is playing, PiP will be activated automatically.
+
+### I prefer using media library instead of a file chooser...
+
+Just Player uses system file chooser which already allows two different browsing modes: **Videos** - listing only device directories that contain videos; **File browser** - full navigation in the device file system structure
+
+Alternatively, some people choose to use the media library function of
+[Nova Video Player](https://github.com/nova-video-player/aos-AVP) and integrate it with Just Player by enabling "*Allow using another video player*" feature. This also gives you convenient access to content on network storages (SMB, UPnP, FTP etc.).
 
 ## Other open source Android video players
 

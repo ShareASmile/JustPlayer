@@ -15,6 +15,7 @@
         tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <queries>
         <intent>
@@ -24,6 +25,9 @@
         <intent>
             <action android:name="android.intent.action.OPEN_DOCUMENT_TREE" />
         </intent>
+        <intent>
+            <action android:name="android.settings.PICTURE_IN_PICTURE_SETTINGS" />
+        </intent>
     </queries>
 
     <application
@@ -32,6 +36,7 @@
         android:icon="@mipmap/ic_launcher"
         android:banner="@mipmap/banner"
         android:label="@string/app_name"
+        android:appCategory="video"
         android:largeHeap="true"
         android:supportsRtl="true"
         android:theme="@style/Theme.Player"
