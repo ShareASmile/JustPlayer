@@ -1144,7 +1144,13 @@ public class PlayerActivity extends Activity {
 
             final Intent intent = createBaseFileIntent(Intent.ACTION_OPEN_DOCUMENT, pickerInitialUri);
             intent.addCategory(Intent.CATEGORY_OPENABLE);
-            intent.setType("video/*");
+            intent.setType("*/*");
+
+            final String[] supportedMimeTypes = {
+                    "video/*",
+                    "audio/*"
+            };
+            intent.putExtra(Intent.EXTRA_MIME_TYPES, supportedMimeTypes);
 
             safelyStartActivityForResult(intent, REQUEST_CHOOSER_VIDEO);
         }
