@@ -114,16 +114,23 @@ import java.util.concurrent.TimeUnit;
 
 public class PlayerActivity extends Activity {
 
-    private PlayerListener playerListener;
+    protected PlayerListener playerListener;
+
+    protected DefaultTrackSelector trackSelector;
+    protected YouTubeOverlay youTubeOverlay;
+
+    protected MediaSession mediaSession;
+
+    //TODO ny above change protected
     private BroadcastReceiver mReceiver;
     private AudioManager mAudioManager;
-    private MediaSession mediaSession;
-    private DefaultTrackSelector trackSelector;
+
+
     public static LoudnessEnhancer loudnessEnhancer;
 
     public CustomPlayerView playerView;
     public static ExoPlayer player;
-    private YouTubeOverlay youTubeOverlay;
+
 
     private Object mPictureInPictureParamsBuilder;
 
@@ -1152,17 +1159,7 @@ public class PlayerActivity extends Activity {
         mPrefs.updateSubtitle(uri);
     }
 
-    public void initializePlayer() {
-        boolean isNetworkUri = Utils.isSupportedNetworkUri(mPrefs.mediaUri);
-        haveMedia = mPrefs.mediaUri != null;
-
-        if (player != null) {
-            player.removeListener(playerListener);
-            player.clearMediaItems();
-            player.release();
-            player = null;
-        }
-
+    protected void setupPlayerWithSource(boolean isNetworkUri){
         trackSelector = new DefaultTrackSelector(this);
         if (mPrefs.tunneling) {
             trackSelector.setParameters(trackSelector.buildUponParameters()
@@ -1231,8 +1228,7 @@ public class PlayerActivity extends Activity {
             player.setSkipSilenceEnabled(true);
         }
 
-        youTubeOverlay.player(player);
-        playerView.setPlayer(player);
+
 
         if (mediaSession != null) {
             mediaSession.release();
@@ -1246,6 +1242,50 @@ public class PlayerActivity extends Activity {
             }
         }
 
+        MediaItem.Builder mediaItemBuilder = new MediaItem.Builder()
+                .setUri(mPrefs.mediaUri)
+                .setMimeType(mPrefs.mediaType);
+        String title;
+        if (apiTitle != null) {
+            title = apiTitle;
+        } else {
+            title = Utils.getFileName(PlayerActivity.this, mPrefs.mediaUri);
+        }
+        if (title != null) {
+            final MediaMetadata mediaMetadata = new MediaMetadata.Builder()
+                    .setTitle(title)
+                    .setDisplayTitle(title)
+                    .build();
+            mediaItemBuilder.setMediaMetadata(mediaMetadata);
+        }
+        if (apiAccess && apiSubs.size() > 0) {
+            mediaItemBuilder.setSubtitleConfigurations(apiSubs);
+        } else if (mPrefs.subtitleUri != null && Utils.fileExists(this, mPrefs.subtitleUri)) {
+            MediaItem.SubtitleConfiguration subtitle = SubtitleUtils.buildSubtitle(this, mPrefs.subtitleUri, null, true);
+            mediaItemBuilder.setSubtitleConfigurations(Collections.singletonList(subtitle));
+        }
+
+        player.setMediaItem(mediaItemBuilder.build(), mPrefs.getPosition());
+    }
+
+    public void initializePlayer() {
+        boolean isNetworkUri = Utils.isSupportedNetworkUri(mPrefs.mediaUri);
+        haveMedia = mPrefs.mediaUri != null;
+
+        if (player != null) {
+            player.removeListener(playerListener);
+            player.clearMediaItems();
+            player.release();
+            player = null;
+        }
+
+
+        //TODO ny
+        setupPlayerWithSource(isNetworkUri);
+        //
+
+        youTubeOverlay.player(player);
+        playerView.setPlayer(player);
         playerView.setControllerShowTimeoutMs(-1);
 
         locked = false;
@@ -1268,30 +1308,6 @@ public class PlayerActivity extends Activity {
                 playerView.setScale(1.f);
             }
             updatebuttonAspectRatioIcon();
-
-            MediaItem.Builder mediaItemBuilder = new MediaItem.Builder()
-                    .setUri(mPrefs.mediaUri)
-                    .setMimeType(mPrefs.mediaType);
-            String title;
-            if (apiTitle != null) {
-                title = apiTitle;
-            } else {
-                title = Utils.getFileName(PlayerActivity.this, mPrefs.mediaUri);
-            }
-            if (title != null) {
-                final MediaMetadata mediaMetadata = new MediaMetadata.Builder()
-                        .setTitle(title)
-                        .setDisplayTitle(title)
-                        .build();
-                mediaItemBuilder.setMediaMetadata(mediaMetadata);
-            }
-            if (apiAccess && apiSubs.size() > 0) {
-                mediaItemBuilder.setSubtitleConfigurations(apiSubs);
-            } else if (mPrefs.subtitleUri != null && Utils.fileExists(this, mPrefs.subtitleUri)) {
-                MediaItem.SubtitleConfiguration subtitle = SubtitleUtils.buildSubtitle(this, mPrefs.subtitleUri, null, true);
-                mediaItemBuilder.setSubtitleConfigurations(Collections.singletonList(subtitle));
-            }
-            player.setMediaItem(mediaItemBuilder.build(), mPrefs.getPosition());
 
             if (loudnessEnhancer != null) {
                 loudnessEnhancer.release();
@@ -2074,7 +2090,7 @@ public class PlayerActivity extends Activity {
         }
     }
 
-    private void updateLoading(final boolean enableLoading) {
+    protected void updateLoading(final boolean enableLoading) {
         if (enableLoading) {
             exoPlayPause.setVisibility(View.GONE);
             loadingProgressBar.setVisibility(View.VISIBLE);
@@ -2204,7 +2220,7 @@ public class PlayerActivity extends Activity {
         }
     }
 
-    void notifyAudioSessionUpdate(final boolean active) {
+    protected void notifyAudioSessionUpdate(final boolean active) {
         final Intent intent = new Intent(active ? AudioEffect.ACTION_OPEN_AUDIO_EFFECT_CONTROL_SESSION
                 : AudioEffect.ACTION_CLOSE_AUDIO_EFFECT_CONTROL_SESSION);
         intent.putExtra(AudioEffect.EXTRA_AUDIO_SESSION, player.getAudioSessionId());
@@ -2219,7 +2235,7 @@ public class PlayerActivity extends Activity {
         }
     }
 
-    void updateButtons(final boolean enable) {
+    protected void updateButtons(final boolean enable) {
         if (buttonPiP != null) {
             Utils.setButtonEnabled(this, buttonPiP, enable);
         }
@@ -2268,7 +2284,7 @@ public class PlayerActivity extends Activity {
         updatebuttonAspectRatioIcon();
     }
 
-    private void updatebuttonAspectRatioIcon() {
+    protected void updatebuttonAspectRatioIcon() {
         if (playerView.getResizeMode() == AspectRatioFrameLayout.RESIZE_MODE_ZOOM) {
             buttonAspectRatio.setImageResource(R.drawable.ic_fit_screen_24dp);
         } else {
