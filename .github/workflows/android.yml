@@ -1,10 +1,11 @@
 name: Android CI
 
 on:
+  workflow_dispatch:
   push:
-    branches: [ master ]
+    branches: [ just ]
   pull_request:
-    branches: [ master ]
+    branches: [ just ]
 
 jobs:
   build:
@@ -23,3 +24,8 @@ jobs:
       run: chmod +x gradlew
     - name: Build with Gradle
       run: ./gradlew build
+    - name: Store APK files as artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: APK Files
+        path: app/build/outputs/apk/**/*.apk
