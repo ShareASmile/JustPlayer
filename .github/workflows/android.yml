@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
   push:
     branches:
-              master
-              dismiss-interface-at-pause
+          - master
+          - dismiss-interface-at-pause
   pull_request:
     branches:
               master
