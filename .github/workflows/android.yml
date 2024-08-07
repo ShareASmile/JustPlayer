@@ -28,4 +28,4 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: APK Files
-        path: app/build/outputs/apk/**/*.apk
+        path: justPlayer/build/outputs/apk/**/*.apk
