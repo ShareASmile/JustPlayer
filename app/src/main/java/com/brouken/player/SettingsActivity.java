@@ -15,9 +15,13 @@ import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.MissingResourceException;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -74,6 +78,7 @@ public class SettingsActivity extends AppCompatActivity {
             }
             Preference preferenceFrameRateMatching = findPreference("frameRateMatching");
             if (preferenceFrameRateMatching != null) {
+                preferenceFrameRateMatching.setVisible(BuildConfig.FLAVOR_feature.equals("full"));
                 preferenceFrameRateMatching.setEnabled(Build.VERSION.SDK_INT >= 23);
             }
             ListPreference listPreferenceFileAccess = findPreference("fileAccess");
@@ -93,6 +98,16 @@ public class SettingsActivity extends AppCompatActivity {
                 listPreferenceFileAccess.setEntries(entries.toArray(new String[0]));
                 listPreferenceFileAccess.setEntryValues(values.toArray(new String[0]));
             }
+
+            ListPreference listPreferenceLanguageAudio = findPreference("languageAudio");
+            if (listPreferenceLanguageAudio != null) {
+                LinkedHashMap<String, String> entries = new LinkedHashMap<>();
+                entries.put(Prefs.TRACK_DEFAULT, getString(R.string.pref_language_track_default));
+                entries.put(Prefs.TRACK_DEVICE, getString(R.string.pref_language_track_device));
+                entries.putAll(getLanguages());
+                listPreferenceLanguageAudio.setEntries(entries.values().toArray(new String[0]));
+                listPreferenceLanguageAudio.setEntryValues(entries.keySet().toArray(new String[0]));
+            }
         }
 
         @Override
@@ -101,6 +116,29 @@ public class SettingsActivity extends AppCompatActivity {
             if (Build.VERSION.SDK_INT >= 29) {
                 recyclerView = getListView();
             }
+        }
+
+        LinkedHashMap<String, String> getLanguages() {
+            LinkedHashMap<String, String> languages = new LinkedHashMap<>();
+            for (Locale locale : Locale.getAvailableLocales()) {
+                try {
+                    // MissingResourceException: Couldn't find 3-letter language code for zz
+                    String key = locale.getISO3Language();
+                    String language = locale.getDisplayLanguage();
+                    int length = language.offsetByCodePoints(0, 1);
+                    if (!language.isEmpty()) {
+                        language = language.substring(0, length).toUpperCase(locale) + language.substring(length);
+                    }
+                    String value = language + " [" + key + "]";
+                    languages.put(key, value);
+                } catch (MissingResourceException e) {
+                    e.printStackTrace();
+                }
+            }
+            Collator collator = Collator.getInstance();
+            collator.setStrength(Collator.PRIMARY);
+            Utils.orderByValue(languages, collator::compare);
+            return languages;
         }
     }
 }

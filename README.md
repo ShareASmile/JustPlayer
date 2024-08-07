@@ -1,18 +1,18 @@
 # Just (Video) Player 
 
-[![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/moneytoo/Player.svg?logo=github&label=GitHub)](https://github.com/moneytoo/Player/releases/latest)
-[![Google Play](https://img.shields.io/endpoint?label=Google%20Play&logo=google-play&color=green&cacheSeconds=65536&url=https%3A%2F%2Fplayshields.herokuapp.com%2Fplay%3Fi%3Dcom.brouken.player%26l%3DGoogle%2520Play%26m%3Dv%24version)](https://play.google.com/store/apps/details?id=com.brouken.player)
-[![F-Droid](https://img.shields.io/f-droid/v/com.brouken.player.svg?logo=f-droid&label=F-Droid)](https://f-droid.org/packages/com.brouken.player/)
-[![GitHub all releases](https://img.shields.io/github/downloads/moneytoo/Player/total?logo=github)](https://github.com/moneytoo/Player/releases/latest)
-[![Google Play](https://img.shields.io/endpoint?color=green&logo=google-play&url=https%3A%2F%2Fplayshields.herokuapp.com%2Fplay%3Fi%3Dcom.brouken.player%26l%3Ddownloads%26m%3D%24installs)](https://play.google.com/store/apps/details?id=com.brouken.player)
-[![Google Play](https://img.shields.io/endpoint?color=green&logo=google-play&url=https%3A%2F%2Fplayshields.herokuapp.com%2Fplay%3Fi%3Dcom.brouken.player%26l%3Drating%26m%3D%24rating%252F5)](https://play.google.com/store/apps/details?id=com.brouken.player)
-[![ExoPlayer](https://img.shields.io/badge/ExoPlayer-v2.17.1-007ec6)](https://github.com/google/ExoPlayer)
-[![Weblate project translated](https://img.shields.io/weblate/progress/just-player?logo=weblate&logoColor=white)](https://hosted.weblate.org/engage/just-player/)
-[![Subreddit subscribers](https://img.shields.io/reddit/subreddit-subscribers/JustPlayer?label=r%2FJustPlayer&logo=reddit&logoColor=white)](https://www.reddit.com/r/JustPlayer/)
+[![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/moneytoo/Player.svg?logo=github&label=GitHub&cacheSeconds=3600)](https://github.com/moneytoo/Player/releases/latest)
+[![Google Play](https://img.shields.io/endpoint?color=green&logo=google-play&url=https%3A%2F%2Fplay.cuzi.workers.dev%2Fplay%3Fi%3Dcom.brouken.player%26l%3DGoogle%2520Play%26m%3Dv%24version)](https://play.google.com/store/apps/details?id=com.brouken.player)
+[![F-Droid](https://img.shields.io/f-droid/v/com.brouken.player.svg?logo=f-droid&label=F-Droid&cacheSeconds=3600)](https://f-droid.org/packages/com.brouken.player/)
+[![GitHub all releases](https://img.shields.io/github/downloads/moneytoo/Player/total?logo=github&cacheSeconds=3600)](https://github.com/moneytoo/Player/releases/latest)
+[![Google Play](https://img.shields.io/endpoint?color=green&logo=google-play&url=https%3A%2F%2Fplay.cuzi.workers.dev%2Fplay%3Fi%3Dcom.brouken.player%26l%3Ddownloads%26m%3D%24totalinstalls)](https://play.google.com/store/apps/details?id=com.brouken.player)
+[![Google Play](https://img.shields.io/endpoint?color=green&logo=google-play&url=https%3A%2F%2Fplay.cuzi.workers.dev%2Fplay%3Fi%3Dcom.brouken.player%26l%3Drating%26m%3D%25E2%2598%2585%2520%24rating)](https://play.google.com/store/apps/details?id=com.brouken.player)
+[![Media3](https://img.shields.io/badge/Media3-1.1.1-007ec6?cacheSeconds=3600)](https://github.com/androidx/media/releases/tag/1.1.1)
+[![Weblate project translated](https://img.shields.io/weblate/progress/just-player?logo=weblate&logoColor=white&cacheSeconds=36000)](https://hosted.weblate.org/engage/just-player/)
+[![Subreddit subscribers](https://img.shields.io/reddit/subreddit-subscribers/JustPlayer?label=r%2FJustPlayer&logo=reddit&logoColor=white&cacheSeconds=3600)](https://www.reddit.com/r/JustPlayer/)
 
-Android video player based on [ExoPlayer](https://github.com/google/ExoPlayer), compatible with Android 5+ and Android TV.
+Android video player based on [Media3](https://github.com/androidx/media) (formerly [ExoPlayer](https://github.com/google/ExoPlayer)), compatible with Android 5+ and Android TV.
 
-It uses ExoPlayer's ``extension-ffmpeg`` with [all its audio formats](https://exoplayer.dev/supported-formats.html#ffmpeg-extension) enabled (it can handle even special formats like AC3, EAC3, DTS, DTS HD, TrueHD etc.).
+It uses ExoPlayer's ``ffmpeg`` extension with [all its audio formats](https://exoplayer.dev/supported-formats.html#ffmpeg-extension) enabled (it can handle even special formats like AC3, EAC3, DTS, DTS HD, TrueHD etc.).
 
 It properly syncs audio with video track when using Bluetooth earphones/speaker. (I was not able to find any other nice ExoPlayer based video player so I created this one.)
 
@@ -22,13 +22,15 @@ It properly syncs audio with video track when using Bluetooth earphones/speaker.
  * **Video**: H.263, H.264 AVC (Baseline Profile; Main Profile on Android 6+), H.265 HEVC, MPEG-4 SP, VP8, VP9, AV1
  * **Containers**: MP4, MOV, WebM, MKV, Ogg, MPEG-TS, MPEG-PS, FLV, AVI (🚧)
  * **Streaming**: DASH, HLS, SmoothStreaming, RTSP
- * **Subtitles**: SRT, SSA, ASS, TTML, VTT, DVB
+ * **Subtitles**: SRT, SSA/ASS ([limited styling](https://github.com/google/ExoPlayer/issues/8435)), TTML, VTT, DVB
 
 HDR (HDR10+ and Dolby Vision) video playback on compatible/supported hardware.
 
+AC-4 audio is supported on devices providing such system decoder (e.g. Samsung Galaxy A, S and Z series running Android 11 or later).
+
 ## Screenshots
 
-<img src="https://raw.githubusercontent.com/moneytoo/Player/master/fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" width="806"> <img src="https://raw.githubusercontent.com/moneytoo/Player/master/fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" width="400"> <img src="https://raw.githubusercontent.com/moneytoo/Player/master/fastlane/metadata/android/en-US/images/phoneScreenshots/3.png" width="400">
+<img src="https://raw.githubusercontent.com/moneytoo/Player/master/fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" width="806"> <img src="https://raw.githubusercontent.com/moneytoo/Player/master/fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" width="400"> <img src="https://raw.githubusercontent.com/moneytoo/Player/master/fastlane/metadata/android/en-US/images/phoneScreenshots/4.png" width="400">
 
 ## Features
 
@@ -49,14 +51,14 @@ HDR (HDR10+ and Dolby Vision) video playback on compatible/supported hardware.
  * Pause playback when disconnecting headphones
  * No ads, tracking or excessive permissions
 
-To load external (non-embedded) subtitles, long press the file open action in the bottom bar. The first time you do that, you will be offered to select root video folder to enable automatic loading of external subtitles.
-
 Some advanced features can be enabled or configured in settings. To access it, long press the ⚙️ gear icon. (Alternatively, you can also enter this settings from App info screen.)
 
+ * Default audio tracks. Set specific language, prefer device language, media file defaults.
  * File access mode. Use of Storage Access Framework / MediaStore / legacy file access.
  * Decoder priority. Prefer device or app decoders.
  * Auto frame rate matching. (On Android 11+ and "compatible" displays, ExoPlayer supports [seamless refresh rate switching](https://source.android.com/devices/graphics/multiple-refresh-rate))
  * [Tunneled playback](https://medium.com/google-exoplayer/tunneled-video-playback-in-exoplayer-84f084a8094d). Enabling tunneling can improve playback of 4K/HDR content on Android TV.
+ * Playback of Dolby Vision profile 7 (UHD Blu-ray) as HDR HEVC
  * Auto picture-in-picture. When you leave Just Player through the home button and video is playing, PiP will be activated automatically.
  * Skip silence
  * Repeat toggle
@@ -82,17 +84,21 @@ Also available on **OPPO App Market**, **Xiaomi GetApps** or [Uptodown](https://
 
 Other links/channels: application thread on [XDA Developers](https://forum.xda-developers.com/t/app-5-0-just-video-player-no-bluetooth-lag-exoplayer-ffmpeg-audio-codecs.4189183/), subreddit on [reddit](https://www.reddit.com/r/JustPlayer/), entry on [AlternativeTo](https://alternativeto.net/software/just-video-player/about/), git mirror on [GitLab](https://gitlab.com/moneytoo/Player)
 
-## FAQ
+## ❓FAQ
 
-### What to do if Bluetooth audio is not in sync with video?
+### How do I open subtitle file (e.g. .srt)?
 
-Just pause and resume playback once again.
+To load external (non-embedded) subtitles, long press the 📁 file open action in the bottom bar. The first time you do that, you will be offered to select root video folder to enable automatic loading of external subtitles.
+
+💡📺 Because of [limitations on Android TV](https://github.com/moneytoo/Player/issues/248#issuecomment-1019565204), Just Player is also able to open subtitle files from external file managers. You can open video file from your file manager, then return back and also  open subtitle file in Just Player. Subtitle will be available in the last selected video.
+
+Just Player is also able to detect some subtitle files when accessing videos over HTTP/HTTPS. Just use the [same naming](https://github.com/moneytoo/Player/issues/173) for video files as well as subtitles (e.g. `video.mkv` and `video.srt`).
 
 ### How do I change subtitle font, size or color?
 
-Open system [Caption preferences](https://support.google.com/accessibility/android/answer/6006554) on your device (usually in the _Accessibility_ section of _Settings_) and you will be able to fully customize the subtitle style. Just Player uses style defined in _Caption preferences_ even when the _Show captions_ option is turned off. If you want to apply additional formatting defined in subtitles, leave this option off.
+Open system [Caption preferences](https://support.google.com/accessibility/android/answer/6006554) on your device (usually in the _Accessibility_ section of _Settings_) and you will be able to fully customize the subtitle style.
 
-To quickly access the system _Caption preferences_ screen, long tap the subtitle button (CC).
+To quickly access the system _Caption preferences_ screen, long tap the subtitle button.
 
 <img src="https://raw.githubusercontent.com/moneytoo/Player/master/fastlane/metadata/android/en-US/images/readmeScreenshots/caption_preferences_1.png" width="140"> <img src="https://raw.githubusercontent.com/moneytoo/Player/master/fastlane/metadata/android/en-US/images/readmeScreenshots/caption_preferences_2.png" width="140">
 
@@ -127,9 +133,19 @@ Alternatively, some people choose to use the media library function of
 
 2. Open video directly from your favorite file explorer. _Solid Explorer_ works really well, especially if you also want to automatically load subtitles.
 
+### How do I open a streaming link, where do I enter an url?
+
+Just Player does not have any UI to enter internet addresses, but it is registered for handling all compatible streaming links. When opening/tapping links in other apps, Just Player should be generally offered as an option. (Though this may not work in all situations, especially on Android 12+.)
+
+Alternatively, select the text url in the source app, choose _Share_ and find Just Player to play it.
+
 ### How to zoom in to get rid of black bars?
 
 If your device has a touchscreen you can use the pinch-to-zoom gesture or just tap the Resize button for a Crop. **Android TV**: Long tap the Resize button to enter Zoom mode. Then use Up and Down keys for precise zoom.
+
+### What to do if Bluetooth audio is not in sync with video?
+
+Just pause and resume playback once again.
 
 ### Why is the APK so big?
 
@@ -141,13 +157,14 @@ Please note that installs and updates made through Google Play are significantly
 
 Here's a comparison table presenting all available and significant open source video players for Android I was able to find. Just Player is something like ~~80%~~ 90% feature complete. It will probably never have dozens of options or some rich media library UI. It will never truly compete with feature rich VLC. It just attempts to provide functional feature set and motive others to create greater players based on amazing ExoPlayer.
 
-| App name (source)                                                 | Tested version        | targetSdk | Media engine                                                                                                                                                            | Gestures                  | PiP    | Cutout (notch) | Notes                                               |
-| ----------------------------------------------------------------- | --------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- | ------ | -------------- | --------------------------------------------------- |
-| [Fermata Media Player](https://github.com/AndreyPavlenko/Fermata) | 1.8.11                | 31        | [MediaPlayer](https://developer.android.com/guide/topics/media/mediaplayer), [ExoPlayer](https://exoplayer.dev/) and [libVLC](https://www.videolan.org/vlc/libvlc.html) | 🟡 Seek/Volume            | 🔴 No  | 🔴 No          | Some features are limited to libVLC                 |
-| [Just (Video) Player](https://github.com/moneytoo/Player)         | 0.92                  | 31        | [ExoPlayer](https://exoplayer.dev/)                                                                                                                                     | 🟢 Seek/Volume/Brightness | 🟢 Yes | 🟢 Yes         |                                                     |
-| [Kodi](https://github.com/xbmc/xbmc)                              | 19.3                  | 29        | ?                                                                                                                                                                       | 🔴 No                     | 🔴 No  | 🔴 No          |                                                     |
-| [mpv](https://github.com/mpv-android/mpv-android)                 | 2021-10-28-release    | 29        | [libmpv](https://github.com/mpv-player/mpv)                                                                                                                             | 🟢 Seek/Volume/Brightness | 🟢 Yes | 🟢 Yes         | Possible performance issues of 4K 60 FPS HDR videos |
-| [Nova Video Player](https://github.com/nova-video-player/aos-AVP) | 5.15.26-20210915.1928 | 29        | ?, ([ExoPlayer](https://exoplayer.dev/) in [nova v7](https://github.com/nova-video-player/aos-AVP/milestone/9))                                                         | 🔴 No                     | 🟢 Yes | 🟢 Yes         |                                                     |
-| [VLC](https://code.videolan.org/videolan/vlc-android)             | 3.4.3                 | 30        | [libVLC](https://www.videolan.org/vlc/libvlc.html)                                                                                                                      | 🟢 Seek/Volume/Brightness | 🟢 Yes | 🟢 Yes         |
+| App name (source)                                                 | Media engine                                                                                                                                                            | Gestures                  | PiP    | Cutout (notch) | Android TV |
+| ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- | ------ | -------------- | ---------- |
+| [Fermata Media Player](https://github.com/AndreyPavlenko/Fermata) | [MediaPlayer](https://developer.android.com/guide/topics/media/mediaplayer), [ExoPlayer](https://exoplayer.dev/) and [libVLC](https://www.videolan.org/vlc/libvlc.html) | 🟡 Seek/Volume            | 🔴 No  | 🔴 No          | 🟢 Yes     |
+| [Just (Video) Player](https://github.com/moneytoo/Player)         | [ExoPlayer](https://exoplayer.dev/)                                                                                                                                     | 🟢 Seek/Volume/Brightness | 🟢 Yes | 🟢 Yes         | 🟢 Yes     |
+| [Kodi](https://github.com/xbmc/xbmc)                              | ?                                                                                                                                                                       | 🔴 No                     | 🔴 No  | 🔴 No          | 🟢 Yes     |
+| [mpv](https://github.com/mpv-android/mpv-android)                 | [libmpv](https://github.com/mpv-player/mpv)                                                                                                                             | 🟢 Seek/Volume/Brightness | 🟢 Yes | 🟢 Yes         | 🟢 Yes     |
+| [Next Player](https://github.com/anilbeesetti/nextplayer)         | [ExoPlayer](https://exoplayer.dev/)                                                                                                                                     | 🟢 Seek/Volume/Brightness | 🔴 No  | 🟢 Yes         | 🔴 No      |
+| [Nova Video Player](https://github.com/nova-video-player/aos-AVP) | MediaPlayer                                                                                                                                                             | 🔴 No                     | 🟢 Yes | 🟢 Yes         | 🟢 Yes     |
+| [VLC](https://code.videolan.org/videolan/vlc-android)             | [libVLC](https://www.videolan.org/vlc/libvlc.html)                                                                                                                      | 🟢 Seek/Volume/Brightness | 🟢 Yes | 🟢 Yes         | 🟢 Yes     |
 
 To find other video players (including non-FOSS), check out [a list on IzzyOnDroid](https://android.izzysoft.de/applists/category/named/multimedia_video_player).

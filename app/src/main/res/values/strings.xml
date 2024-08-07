@@ -5,6 +5,7 @@
     <string name="video_resize_crop">Crop</string>
     <string name="video_orientation_video">Video orientation</string>
     <string name="video_orientation_sensor">Auto-rotate</string>
+    <string name="video_orientation_system">Device orientation</string>
     <string name="onboarding_open_title">Choose a video to play</string>
     <string name="onboarding_open_description">Tap to open a video file. Long tap to load external subtitles.</string>
     <string name="open_subtitles">Load subtitles</string>
@@ -28,6 +29,9 @@
     <string name="pref_skip_silence_off">Play content as is</string>
     <string name="pref_repeat_toggle">Repeat toggle</string>
     <string name="pref_repeat_toggle_summary">Extra control to allow indefinitely loop video (requires app restart)</string>
+    <string name="pref_map_dv7">Dolby Vision profile 7 fallback</string>
+    <string name="pref_map_dv7_on">Play Dolby Vision profile 7 content on HDR displays</string>
+    <string name="pref_map_dv7_off">Play UHD Blu-ray content containing Dolby Vision as is</string>
     <string name="shortcut_videos">Videos</string>
     <string name="button_open">Open</string>
     <string name="button_crop">Resize</string>
@@ -36,10 +40,22 @@
     <string name="pref_file_access">File access</string>
     <string name="pref_file_access_auto">Auto</string>
     <string name="mediastore_empty">No indexed video files found. To access video files in given storage, enable automatic media scanning in system settings.</string>
+    <string name="pref_dangerous_header">Dangerous ⚠️</string>
+    <string name="pref_dangerous_warning">Switching options in this category may break playback of normally compatible content</string>
     <string name="pref_shortcuts_header">Shortcuts</string>
     <string name="pref_captioning_preferences">Captioning preferences</string>
     <string name="pref_decoder_priority">Decoder priority</string>
-    <string name="pref_decoder_priority_prefer_device">Prefer device decoders</string>
+    <string name="pref_decoder_priority_prefer_device">Prefer device decoders (default)</string>
     <string name="pref_decoder_priority_prefer_app">Prefer app decoders</string>
     <string name="pref_decoder_priority_only_device">Device decoders only</string>
+    <string name="pref_language_audio">Default audio track</string>
+    <string name="pref_language_track_device">Device languages</string>
+    <string name="pref_language_track_default">Default</string>
+    <string name="pref_subtitle_header">Subtitle</string>
+    <string name="pref_subtitle_style_embedded">Embedded styles</string>
+    <string name="pref_subtitle_style_embedded_on">Apply embedded subtitle styles</string>
+    <string name="pref_subtitle_style_embedded_off">Do not apply embedded subtitle styles</string>
+    <string name="pref_subtitle_style_bold">Bold style</string>
+    <string name="pref_subtitle_style_bold_on">Use bold typeface as regular</string>
+    <string name="pref_subtitle_style_bold_off">Use default regular typeface</string>
 </resources>
