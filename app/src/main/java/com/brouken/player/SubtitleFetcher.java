@@ -4,14 +4,13 @@ import android.net.Uri;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-
-import com.google.android.exoplayer2.MediaItem;
+import androidx.media3.common.MediaItem;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 import okhttp3.Call;
@@ -26,12 +25,14 @@ class SubtitleFetcher {
 
     private PlayerActivity activity;
     private CountDownLatch countDownLatch;
-    private final LinkedHashMap<Uri, Boolean> urls;
+    private final List<Uri> urls;
     private Uri subtitleUri;
+    private final List<Uri> foundUrls;
 
-    public SubtitleFetcher(PlayerActivity activity, LinkedHashMap<Uri, Boolean> urls) {
+    public SubtitleFetcher(PlayerActivity activity, List<Uri> urls) {
         this.activity = activity;
         this.urls = urls;
+        this.foundUrls = new ArrayList<>();
     }
 
     public void start() {
@@ -53,9 +54,7 @@ class SubtitleFetcher {
                     Uri url = Uri.parse(response.request().url().toString());
                     Utils.log(response.code() + ": " + url);
                     if (response.isSuccessful()) {
-                        synchronized (urls) {
-                            urls.put(url, true);
-                        }
+                        foundUrls.add(url);
                     }
                     response.close();
                     countDownLatch.countDown();
@@ -64,7 +63,7 @@ class SubtitleFetcher {
 
             countDownLatch = new CountDownLatch(urls.size());
 
-            for (Uri url : urls.keySet()) {
+            for (Uri url : urls) {
                 // Total Commander 3.24 / LAN plugin 3.20 does not support HTTP HEAD
                 //Request request = new Request.Builder().url(url.toString()).head().build();
                 if (HttpUrl.parse(url.toString()) == null) {
@@ -81,9 +80,9 @@ class SubtitleFetcher {
                 e.printStackTrace();
             }
 
-            for (Map.Entry<Uri, Boolean> set : urls.entrySet()) {
-                if (set.getValue()) {
-                    subtitleUri = set.getKey();
+            for (Uri url : urls) {
+                if (foundUrls.contains(url)) {
+                    subtitleUri = url;
                     break;
                 }
             }
@@ -109,7 +108,7 @@ class SubtitleFetcher {
                 }
 
                 InputStream inputStream = responseBody.byteStream();
-                Uri convertedSubtitleUri = SubtitleUtils.convertInputStreamToUTF(activity, subtitleUri, inputStream);
+                Uri convertedSubtitleUri = UtilsFeature.convertInputStreamToUTF(activity, subtitleUri, inputStream);
 
                 if (convertedSubtitleUri == null) {
                     return;

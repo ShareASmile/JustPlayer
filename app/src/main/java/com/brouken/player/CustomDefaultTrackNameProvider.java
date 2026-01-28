@@ -2,9 +2,9 @@ package com.brouken.player;
 
 import android.content.res.Resources;
 
-import com.google.android.exoplayer2.Format;
-import com.google.android.exoplayer2.ui.DefaultTrackNameProvider;
-import com.google.android.exoplayer2.util.MimeTypes;
+import androidx.media3.common.Format;
+import androidx.media3.common.MimeTypes;
+import androidx.media3.ui.DefaultTrackNameProvider;
 
 class CustomDefaultTrackNameProvider extends DefaultTrackNameProvider {
     public CustomDefaultTrackNameProvider(Resources resources) {
@@ -16,10 +16,15 @@ class CustomDefaultTrackNameProvider extends DefaultTrackNameProvider {
         String trackName = super.getTrackName(format);
         if (format.sampleMimeType != null) {
             String sampleFormat = formatNameFromMime(format.sampleMimeType);
-            if (BuildConfig.DEBUG && sampleFormat == null) {
+            if (sampleFormat == null) {
+                sampleFormat = formatNameFromMime(format.codecs);
+            }
+            if (sampleFormat == null) {
                 sampleFormat = format.sampleMimeType;
             }
-            trackName += " (" + sampleFormat + ")";
+            if (sampleFormat != null) {
+                trackName += " (" + sampleFormat + ")";
+            }
         }
         if (format.label != null) {
             if (!trackName.startsWith(format.label)) { // HACK
@@ -30,6 +35,9 @@ class CustomDefaultTrackNameProvider extends DefaultTrackNameProvider {
     }
 
     private String formatNameFromMime(final String mimeType) {
+        if (mimeType == null) {
+            return null;
+        }
         switch (mimeType) {
             case MimeTypes.AUDIO_DTS:
                 return "DTS";

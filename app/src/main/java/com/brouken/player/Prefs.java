@@ -6,8 +6,8 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.preference.PreferenceManager;
 
-import com.google.android.exoplayer2.DefaultRenderersFactory;
-import com.google.android.exoplayer2.ui.AspectRatioFrameLayout;
+import androidx.media3.exoplayer.DefaultRenderersFactory;
+import androidx.media3.ui.AspectRatioFrameLayout;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -43,6 +43,13 @@ class Prefs {
     private static final String PREF_KEY_SPEED = "speed";
     private static final String PREF_KEY_FILE_ACCESS = "fileAccess";
     private static final String PREF_KEY_DECODER_PRIORITY = "decoderPriority";
+    private static final String PREF_KEY_MAP_DV7 = "mapDV7ToHevc";
+    private static final String PREF_KEY_LANGUAGE_AUDIO = "languageAudio";
+    private static final String PREF_KEY_SUBTITLE_STYLE_EMBEDDED = "subtitleStyleEmbedded";
+    private static final String PREF_KEY_SUBTITLE_STYLE_BOLD = "subtitleStyleBold";
+
+    public static final String TRACK_DEFAULT = "default";
+    public static final String TRACK_DEVICE = "device";
 
     final Context mContext;
     final SharedPreferences mSharedPreferences;
@@ -52,7 +59,7 @@ class Prefs {
     public Uri scopeUri;
     public String mediaType;
     public int resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT;
-    public Utils.Orientation orientation = Utils.Orientation.VIDEO;
+    public Utils.Orientation orientation = Utils.Orientation.UNSPECIFIED;
     public float scale = 1.f;
     public float speed = 1.f;
 
@@ -70,6 +77,10 @@ class Prefs {
     public boolean repeatToggle = false;
     public String fileAccess = "auto";
     public int decoderPriority = DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON;
+    public boolean mapDV7ToHevc = false;
+    public String languageAudio = TRACK_DEVICE;
+    public boolean subtitleStyleEmbedded = true;
+    public boolean subtitleStyleBold = false;
 
     private LinkedHashMap positions;
 
@@ -98,7 +109,7 @@ class Prefs {
             subtitleTrackId = mSharedPreferences.getString(PREF_KEY_SUBTITLE_TRACK_ID, subtitleTrackId);
         if (mSharedPreferences.contains(PREF_KEY_RESIZE_MODE))
             resizeMode = mSharedPreferences.getInt(PREF_KEY_RESIZE_MODE, resizeMode);
-        orientation = Utils.Orientation.values()[mSharedPreferences.getInt(PREF_KEY_ORIENTATION, 1)];
+        orientation = Utils.Orientation.values()[mSharedPreferences.getInt(PREF_KEY_ORIENTATION, orientation.value)];
         scale = mSharedPreferences.getFloat(PREF_KEY_SCALE, scale);
         if (mSharedPreferences.contains(PREF_KEY_SCOPE_URI))
             scopeUri = Uri.parse(mSharedPreferences.getString(PREF_KEY_SCOPE_URI, null));
@@ -115,6 +126,10 @@ class Prefs {
         repeatToggle = mSharedPreferences.getBoolean(PREF_KEY_REPEAT_TOGGLE, repeatToggle);
         fileAccess = mSharedPreferences.getString(PREF_KEY_FILE_ACCESS, fileAccess);
         decoderPriority = Integer.parseInt(mSharedPreferences.getString(PREF_KEY_DECODER_PRIORITY, String.valueOf(decoderPriority)));
+        mapDV7ToHevc = mSharedPreferences.getBoolean(PREF_KEY_MAP_DV7, mapDV7ToHevc);
+        languageAudio = mSharedPreferences.getString(PREF_KEY_LANGUAGE_AUDIO, languageAudio);
+        subtitleStyleEmbedded = mSharedPreferences.getBoolean(PREF_KEY_SUBTITLE_STYLE_EMBEDDED, subtitleStyleEmbedded);
+        subtitleStyleBold = mSharedPreferences.getBoolean(PREF_KEY_SUBTITLE_STYLE_BOLD, subtitleStyleBold);
     }
 
     public void updateMedia(final Context context, final Uri uri, final String type) {
@@ -143,7 +158,7 @@ class Prefs {
                 sharedPreferencesEditor.remove(PREF_KEY_MEDIA_TYPE);
             else
                 sharedPreferencesEditor.putString(PREF_KEY_MEDIA_TYPE, mediaType);
-            sharedPreferencesEditor.commit();
+            sharedPreferencesEditor.apply();
         }
     }
 
@@ -157,7 +172,7 @@ class Prefs {
             else
                 sharedPreferencesEditor.putString(PREF_KEY_SUBTITLE_URI, uri.toString());
             sharedPreferencesEditor.remove(PREF_KEY_SUBTITLE_TRACK_ID);
-            sharedPreferencesEditor.commit();
+            sharedPreferencesEditor.apply();
         }
     }
 
@@ -181,7 +196,7 @@ class Prefs {
             this.brightness = brightness;
             final SharedPreferences.Editor sharedPreferencesEditor = mSharedPreferences.edit();
             sharedPreferencesEditor.putInt(PREF_KEY_BRIGHTNESS, brightness);
-            sharedPreferencesEditor.commit();
+            sharedPreferencesEditor.apply();
         }
     }
 
@@ -189,14 +204,14 @@ class Prefs {
         this.firstRun = false;
         final SharedPreferences.Editor sharedPreferencesEditor = mSharedPreferences.edit();
         sharedPreferencesEditor.putBoolean(PREF_KEY_FIRST_RUN, false);
-        sharedPreferencesEditor.commit();
+        sharedPreferencesEditor.apply();
     }
 
     public void markScopeAsked() {
         this.askScope = false;
         final SharedPreferences.Editor sharedPreferencesEditor = mSharedPreferences.edit();
         sharedPreferencesEditor.putBoolean(PREF_KEY_ASK_SCOPE, false);
-        sharedPreferencesEditor.commit();
+        sharedPreferencesEditor.apply();
     }
 
     private void savePositions() {
@@ -258,7 +273,7 @@ class Prefs {
     public void updateOrientation() {
         final SharedPreferences.Editor sharedPreferencesEditor = mSharedPreferences.edit();
         sharedPreferencesEditor.putInt(PREF_KEY_ORIENTATION, orientation.value);
-        sharedPreferencesEditor.commit();
+        sharedPreferencesEditor.apply();
     }
 
     public void updateMeta(final String audioTrackId, final String subtitleTrackId, final int resizeMode, final float scale, final float speed) {
@@ -280,7 +295,7 @@ class Prefs {
             sharedPreferencesEditor.putInt(PREF_KEY_RESIZE_MODE, resizeMode);
             sharedPreferencesEditor.putFloat(PREF_KEY_SCALE, scale);
             sharedPreferencesEditor.putFloat(PREF_KEY_SPEED, speed);
-            sharedPreferencesEditor.commit();
+            sharedPreferencesEditor.apply();
         }
     }
 
@@ -291,7 +306,7 @@ class Prefs {
             sharedPreferencesEditor.remove(PREF_KEY_SCOPE_URI);
         else
             sharedPreferencesEditor.putString(PREF_KEY_SCOPE_URI, uri.toString());
-        sharedPreferencesEditor.commit();
+        sharedPreferencesEditor.apply();
     }
 
     public void setPersistent(boolean persistentMode) {
