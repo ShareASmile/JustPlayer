@@ -19,10 +19,15 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.media.AudioManager;
+import android.media.MediaExtractor;
+import android.media.MediaFormat;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.os.LocaleList;
+import android.os.storage.StorageManager;
+import android.os.storage.StorageVolume;
 import android.provider.DocumentsContract;
 import android.provider.OpenableColumns;
 import android.util.Log;
@@ -39,31 +44,36 @@ import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
 import androidx.documentfile.provider.DocumentFile;
+import androidx.media3.common.Format;
+import androidx.media3.common.MimeTypes;
 
-import com.arthenica.ffmpegkit.Chapter;
-import com.arthenica.ffmpegkit.FFmpegKitConfig;
-import com.arthenica.ffmpegkit.FFprobeKit;
-import com.arthenica.ffmpegkit.MediaInformation;
-import com.arthenica.ffmpegkit.MediaInformationSession;
-import com.arthenica.ffmpegkit.StreamInformation;
-import com.google.android.exoplayer2.Format;
-import com.google.android.exoplayer2.ui.StyledPlayerControlView;
-import com.google.android.exoplayer2.util.MimeTypes;
 import com.obsez.android.lib.filechooser.ChooserDialog;
+import com.sigpwned.chardet4j.Chardet;
+import com.sigpwned.chardet4j.io.DecodedInputStreamReader;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 class Utils {
 
     public static final String FEATURE_FIRE_TV = "amazon.hardware.fire_tv";
 
-    public static final String[] supportedExtensionsVideo = new String[] { "3gp", "avi", "m4v", "mkv", "mov", "mp4", "ts", "webm" };
+    public static final String[] supportedExtensionsVideo = new String[] { "3gp", "m4v", "mkv", "mov", "mp4", "ts", "webm" };
     public static final String[] supportedExtensionsSubtitle = new String[] { "srt", "ssa", "ass", "vtt", "ttml", "dfxp", "xml" };
 
     public static final String[] supportedMimeTypesVideo = new String[] {
@@ -74,7 +84,6 @@ class Utils {
             "video/quicktime", // .mov
             "video/mp2ts", // .ts, but also incompatible .m2ts
             MimeTypes.VIDEO_H263, // .3gp
-            "video/avi",
             // For remote storages:
             "video/x-m4v", // .m4v
     };
@@ -117,7 +126,7 @@ class Utils {
         }
     }
 
-    public static void toggleSystemUi(final Activity activity, final CustomStyledPlayerView playerView, final boolean show) {
+    public static void toggleSystemUi(final Activity activity, final CustomPlayerView playerView, final boolean show) {
         if (Build.VERSION.SDK_INT >= 31) {
             Window window = activity.getWindow();
             if (window != null) {
@@ -182,7 +191,7 @@ class Utils {
         return audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) == min;
     }
 
-    public static void adjustVolume(final Context context, final AudioManager audioManager, final CustomStyledPlayerView playerView, final boolean raise, boolean canBoost, boolean clear) {
+    public static void adjustVolume(final Context context, final AudioManager audioManager, final CustomPlayerView playerView, final boolean raise, boolean canBoost, boolean clear) {
         playerView.removeCallbacks(playerView.textClearRunnable);
 
         final int volume = getVolume(context,false, audioManager);
@@ -194,12 +203,23 @@ class Utils {
             PlayerActivity.boostLevel = 0;
         }
 
-        if (PlayerActivity.loudnessEnhancer == null)
+        try {
+            if (PlayerActivity.loudnessEnhancer == null || !PlayerActivity.loudnessEnhancer.hasControl()) {
+                canBoost = false;
+            }
+        } catch (Exception e) {
             canBoost = false;
+            e.printStackTrace();
+        }
 
         if (volume != volumeMax || (PlayerActivity.boostLevel == 0 && !raise)) {
-            if (PlayerActivity.loudnessEnhancer != null)
-                PlayerActivity.loudnessEnhancer.setEnabled(false);
+            if (PlayerActivity.loudnessEnhancer != null) {
+                try {
+                    PlayerActivity.loudnessEnhancer.setEnabled(false);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, raise ? AudioManager.ADJUST_RAISE : AudioManager.ADJUST_LOWER, AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE);
             final int volumeNew = getVolume(context, false, audioManager);
             // Custom volume step on Samsung devices (Sound Assistant)
@@ -223,7 +243,7 @@ class Utils {
             if (PlayerActivity.loudnessEnhancer != null) {
                 try {
                     PlayerActivity.loudnessEnhancer.setTargetGain(PlayerActivity.boostLevel * 200);
-                } catch (RuntimeException e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
@@ -231,17 +251,22 @@ class Utils {
         }
 
         playerView.setIconVolume(volumeActive);
-        if (PlayerActivity.loudnessEnhancer != null)
-            PlayerActivity.loudnessEnhancer.setEnabled(PlayerActivity.boostLevel > 0);
+        if (PlayerActivity.loudnessEnhancer != null) {
+            try {
+                PlayerActivity.loudnessEnhancer.setEnabled(PlayerActivity.boostLevel > 0);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
         playerView.setHighlight(PlayerActivity.boostLevel > 0);
 
         if (clear) {
-            playerView.postDelayed(playerView.textClearRunnable, CustomStyledPlayerView.MESSAGE_TIMEOUT_KEY);
+            playerView.postDelayed(playerView.textClearRunnable, CustomPlayerView.MESSAGE_TIMEOUT_KEY);
         }
     }
 
     private static int getVolume(final Context context, final boolean max, final AudioManager audioManager) {
-        if (Build.VERSION.SDK_INT >= 30 && Build.VERSION.SDK_INT <= 31 && Build.MANUFACTURER.equalsIgnoreCase("samsung")) {
+        if (Build.VERSION.SDK_INT >= 30 && Build.MANUFACTURER.equalsIgnoreCase("samsung")) {
             try {
                 Method method;
                 Object result;
@@ -281,20 +306,21 @@ class Utils {
                 );
     }
 
-    public static void showText(final CustomStyledPlayerView playerView, final String text, final long timeout) {
+    public static void showText(final CustomPlayerView playerView, final String text, final long timeout) {
         playerView.removeCallbacks(playerView.textClearRunnable);
         playerView.clearIcon();
         playerView.setCustomErrorMessage(text);
         playerView.postDelayed(playerView.textClearRunnable, timeout);
     }
 
-    public static void showText(final CustomStyledPlayerView playerView, final String text) {
+    public static void showText(final CustomPlayerView playerView, final String text) {
         showText(playerView, text, 1200);
     }
 
     public enum Orientation {
         VIDEO(0, R.string.video_orientation_video),
-        SENSOR(1, R.string.video_orientation_sensor);
+        SYSTEM(1, R.string.video_orientation_system),
+        UNSPECIFIED(2, R.string.video_orientation_system);
 
         public final int value;
         public final int description;
@@ -320,11 +346,11 @@ class Utils {
                 }
 
                 break;
-            case SENSOR:
-                activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
-                break;
-            /*case SYSTEM:
+            case SYSTEM:
                 activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+                break;
+            /*case SENSOR:
+                activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
                 break;*/
         }
     }
@@ -332,8 +358,8 @@ class Utils {
     public static Orientation getNextOrientation(Orientation orientation) {
         switch (orientation) {
             case VIDEO:
-                return Orientation.SENSOR;
-            case SENSOR:
+                return Orientation.SYSTEM;
+            case SYSTEM:
             default:
                 return Orientation.VIDEO;
         }
@@ -421,6 +447,8 @@ class Utils {
     }
 
     public static boolean isSupportedNetworkUri(final Uri uri) {
+        if (uri == null)
+            return false;
         final String scheme = uri.getScheme();
         if (scheme == null)
             return false;
@@ -448,7 +476,7 @@ class Utils {
         // Legacy storage no longer works on Android 11 (level 30)
         if (Build.VERSION.SDK_INT < 30) {
             // (Some boxes still report touchscreen feature)
-            if (!pm.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN)) {
+            if (!pm.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN) && !pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
                 return true;
             }
 
@@ -476,46 +504,8 @@ class Utils {
         return (int)(rate * 100f);
     }
 
-    public static boolean switchFrameRate(final PlayerActivity activity, final Uri uri, final boolean play) {
-        // preferredDisplayModeId only available on SDK 23+
-        // ExoPlayer already uses Surface.setFrameRate() on Android 11+
-        if (Build.VERSION.SDK_INT >= 23) {
-            if (activity.frameRateSwitchThread != null) {
-                activity.frameRateSwitchThread.interrupt();
-            }
-            activity.frameRateSwitchThread = new Thread(() -> {
-                // Use ffprobe as ExoPlayer doesn't detect video frame rate for lots of videos
-                // and has different precision than ffprobe (so do not mix that)
-                float frameRate = Format.NO_VALUE;
-                MediaInformation mediaInformation = getMediaInformation(activity, uri);
-                if (mediaInformation == null) {
-                    activity.runOnUiThread(() -> {
-                        playIfCan(activity, play);
-                    });
-                    return;
-                }
-                List<StreamInformation> streamInformations = mediaInformation.getStreams();
-                for (StreamInformation streamInformation : streamInformations) {
-                    if (streamInformation.getType().equals("video")) {
-                        String averageFrameRate = streamInformation.getAverageFrameRate();
-                        if (averageFrameRate.contains("/")) {
-                            String[] vals = averageFrameRate.split("/");
-                            frameRate = Float.parseFloat(vals[0]) / Float.parseFloat(vals[1]);
-                            break;
-                        }
-                    }
-                }
-                handleFrameRate(activity, frameRate, play);
-            });
-            activity.frameRateSwitchThread.start();
-            return true;
-        } else {
-            return false;
-        }
-    }
-
     @RequiresApi(api = Build.VERSION_CODES.M)
-    private static void handleFrameRate(final PlayerActivity activity, float frameRate, boolean play) {
+    static void handleFrameRate(final PlayerActivity activity, float frameRate, boolean play) {
         activity.runOnUiThread(() -> {
             boolean switchingModes = false;
 
@@ -589,7 +579,7 @@ class Utils {
         });
     }
 
-    private static void playIfCan(final PlayerActivity activity, boolean play) {
+    static void playIfCan(final PlayerActivity activity, boolean play) {
         if (play) {
             if (PlayerActivity.player != null)
                 PlayerActivity.player.play();
@@ -623,7 +613,7 @@ class Utils {
                         } else {
                             // Convert subtitles to UTF-8 if necessary
                             SubtitleUtils.clearCache(activity);
-                            uri = SubtitleUtils.convertToUTF(activity, uri);
+                            uri = Utils.convertToUTF(activity, uri);
 
                             activity.mPrefs.updateSubtitle(uri);
                         }
@@ -643,6 +633,61 @@ class Utils {
         chooserDialog.build().show();
 
         return true;
+    }
+
+    public static Uri convertToUTF(PlayerActivity activity, Uri subtitleUri) {
+        try {
+            String scheme = subtitleUri.getScheme();
+            if (scheme != null && scheme.toLowerCase().startsWith("http")) {
+                List<Uri> urls = new ArrayList<>();
+                urls.add(subtitleUri);
+                SubtitleFetcher subtitleFetcher = new SubtitleFetcher(activity, urls);
+                subtitleFetcher.start();
+                return null;
+            } else {
+                InputStream inputStream = activity.getContentResolver().openInputStream(subtitleUri);
+                return convertInputStreamToUTF(activity, subtitleUri, inputStream);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return subtitleUri;
+    }
+
+    public static Uri convertInputStreamToUTF(Context context, Uri subtitleUri, InputStream inputStream) {
+        try {
+            DecodedInputStreamReader decodedInputStreamReader = Chardet.decode(inputStream, StandardCharsets.UTF_8);
+            Charset charset = decodedInputStreamReader.charset();
+            if (!StandardCharsets.UTF_8.equals(charset)) {
+                String filename = subtitleUri.getPath();
+                filename = filename.substring(filename.lastIndexOf("/") + 1);
+                final File file = new File(context.getCacheDir(), filename);
+                final BufferedReader bufferedReader = new BufferedReader(decodedInputStreamReader);
+                final BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(file));
+                char[] buffer = new char[512];
+                int num;
+                int pass = 0;
+                boolean success = true;
+                while ((num = bufferedReader.read(buffer)) != -1) {
+                    bufferedWriter.write(buffer, 0, num);
+                    pass++;
+                    if (pass * 512 > 2_000_000) {
+                        success = false;
+                        break;
+                    }
+                }
+                bufferedWriter.close();
+                bufferedReader.close();
+                if (success) {
+                    subtitleUri = Uri.fromFile(file);
+                } else {
+                    subtitleUri = null;
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return subtitleUri;
     }
 
     public static boolean isPiPSupported(Context context) {
@@ -716,52 +761,103 @@ class Utils {
         return Math.max(min, Math.min(scaleFactor, 2.0f));
     }
 
-    private static MediaInformation getMediaInformation(final Activity activity, final Uri uri) {
-        String path;
-        if (ContentResolver.SCHEME_CONTENT.equals(uri.getScheme())) {
-            try {
-                path = FFmpegKitConfig.getSafParameterForRead(activity, uri);
-            } catch (Exception e) {
-                e.printStackTrace();
-                return null;
-            }
-        } else if (ContentResolver.SCHEME_FILE.equals(uri.getScheme())) {
-            // TODO: FFprobeKit doesn't accept encoded uri (like %20) (?!)
-            path = uri.getSchemeSpecificPart();
-        } else {
-            path = uri.toString();
-        }
-        MediaInformationSession mediaInformationSession = FFprobeKit.getMediaInformation(path);
-        return mediaInformationSession.getMediaInformation();
-    }
-
-    public static void markChapters(final PlayerActivity activity, final Uri uri, StyledPlayerControlView controlView) {
-        if (activity.chaptersThread != null) {
-            activity.chaptersThread.interrupt();
-        }
-        activity.chaptersThread = new Thread(() -> {
-            MediaInformation mediaInformation = getMediaInformation(activity, uri);
-            if (mediaInformation == null)
-                return;
-            final List<Chapter> chapters = mediaInformation.getChapters();
-            final long[] starts = new long[chapters.size()];
-            final boolean[] played = new boolean[chapters.size()];
-
-            for (int i = 0; i < chapters.size(); i++) {
-                Chapter chapter = chapters.get(i);
-                final long start = chapter.getStart();
-                if (start > 0) {
-                    starts[i] = start / 1_000_000;
-                    played[i] = true;
-                }
-            }
-            activity.chapterStarts = starts;
-            activity.runOnUiThread(() -> controlView.setExtraAdGroupMarkers(starts, played));
-        });
-        activity.chaptersThread.start();
-    }
-
     public static boolean isTablet(Context context) {
         return context.getResources().getConfiguration().smallestScreenWidthDp >= 720;
+    }
+
+    public static <K, V> void orderByValue(LinkedHashMap<K, V> m, final Comparator<? super V> c) {
+        List<Map.Entry<K, V>> entries = new ArrayList<>(m.entrySet());
+        Collections.sort(entries, (lhs, rhs) -> c.compare(lhs.getValue(), rhs.getValue()));
+        m.clear();
+        for(Map.Entry<K, V> e : entries) {
+            m.put(e.getKey(), e.getValue());
+        }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.R)
+    public static void scanMediaStorage(Context context) {
+        StorageManager storageManager = (StorageManager) context.getSystemService(Context.STORAGE_SERVICE);
+        List<StorageVolume> storageVolumes = storageManager.getStorageVolumes();
+        List<String> storagePaths = new ArrayList<>();
+        for (StorageVolume volume : storageVolumes) {
+            File directory = volume.getDirectory();
+            if (directory != null) {
+                storagePaths.add(directory.getAbsolutePath());
+            }
+        }
+        MediaScannerConnection.scanFile(context, storagePaths.toArray(new String[0]), new String[]{"*/*"}, null);
+    }
+
+    public static float getFrameRate(Context context, Uri videoUri) {
+        MediaExtractor mediaExtractor = new MediaExtractor();
+        ArrayList<Long> timestamps = new ArrayList<>();
+        float frameRate = Format.NO_VALUE;
+        int ignoreSamples = 30;
+        try {
+            mediaExtractor.setDataSource(context, videoUri, null);
+            for (int i = 0; i < mediaExtractor.getTrackCount(); i++) {
+                MediaFormat format = mediaExtractor.getTrackFormat(i);
+                String mimeType = format.getString(MediaFormat.KEY_MIME);
+                if (mimeType != null && mimeType.startsWith("video/")) {
+                    mediaExtractor.selectTrack(i);
+                    while (timestamps.size() < 350 + ignoreSamples) {
+                        long timestamp = mediaExtractor.getSampleTime();
+                        if (timestamp < 0) {
+                            break;
+                        }
+                        timestamps.add(timestamp);
+                        mediaExtractor.advance();
+                    }
+                    break;
+                }
+            }
+            Collections.sort(timestamps);
+            long totalFrameDuration = 0;
+            for (int i = 1; i < (timestamps.size() - ignoreSamples); i++) {
+                totalFrameDuration += (timestamps.get(i) - timestamps.get(i - 1));
+            }
+            if (timestamps.size() > 1) {
+                float averageFrameDuration = (float) totalFrameDuration / (timestamps.size() - ignoreSamples - 1);
+                frameRate = 1_000_000f / averageFrameDuration;
+                if (frameRate > 23.95f && frameRate < 23.988f) {
+                    frameRate = 24000f / 1001f;
+                } else if (frameRate > 23.988 && frameRate < 24.1) {
+                    frameRate = 24f;
+                } else if (frameRate > 24.9 && frameRate < 25.1) {
+                    frameRate = 25f;
+                } else if (frameRate > 29.95f && frameRate < 29.985) {
+                    frameRate = 30000f / 1001f;
+                } else if (frameRate > 29.985 && frameRate < 30.1) {
+                    frameRate = 30f;
+                } else if (frameRate > 49.9f && frameRate < 50.1) {
+                    frameRate = 50f;
+                } else if (frameRate > 59.9f && frameRate < 59.97) {
+                    frameRate = 60000f / 1001f;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            mediaExtractor.release();
+        }
+        return frameRate;
+    }
+
+    public static boolean switchFrameRate(final PlayerActivity activity, final Uri uri, final boolean play) {
+        // preferredDisplayModeId only available on SDK 23+
+        // ExoPlayer already uses Surface.setFrameRate() on Android 11+
+        if (Build.VERSION.SDK_INT >= 23) {
+            if (activity.frameRateSwitchThread != null) {
+                activity.frameRateSwitchThread.interrupt();
+            }
+            activity.frameRateSwitchThread = new Thread(() -> {
+                float frameRate = getFrameRate(activity, uri);
+                Utils.handleFrameRate(activity, frameRate, play);
+            });
+            activity.frameRateSwitchThread.start();
+            return true;
+        } else {
+            return false;
+        }
     }
 }

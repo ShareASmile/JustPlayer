@@ -7,22 +7,21 @@ import android.media.AudioManager;
 import android.os.Build;
 import android.util.AttributeSet;
 import android.view.GestureDetector;
-import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.core.view.GestureDetectorCompat;
-
-import com.google.android.exoplayer2.C;
-import com.google.android.exoplayer2.SeekParameters;
-import com.google.android.exoplayer2.ui.AspectRatioFrameLayout;
-import com.google.android.exoplayer2.ui.StyledPlayerView;
+import androidx.media3.common.C;
+import androidx.media3.exoplayer.SeekParameters;
+import androidx.media3.ui.AspectRatioFrameLayout;
+import androidx.media3.ui.PlayerView;
 
 import java.util.Collections;
 
-public class CustomStyledPlayerView extends StyledPlayerView implements GestureDetector.OnGestureListener, ScaleGestureDetector.OnScaleGestureListener {
+public class CustomPlayerView extends PlayerView implements GestureDetector.OnGestureListener, ScaleGestureDetector.OnScaleGestureListener {
 
     private final GestureDetectorCompat mDetector;
 
@@ -70,15 +69,15 @@ public class CustomStyledPlayerView extends StyledPlayerView implements GestureD
     private final TextView exoErrorMessage;
     private final View exoProgress;
 
-    public CustomStyledPlayerView(Context context) {
+    public CustomPlayerView(Context context) {
         this(context, null);
     }
 
-    public CustomStyledPlayerView(Context context, AttributeSet attrs) {
+    public CustomPlayerView(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public CustomStyledPlayerView(Context context, AttributeSet attrs, int defStyleAttr) {
+    public CustomPlayerView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         mDetector = new GestureDetectorCompat(context,this);
 
@@ -93,7 +92,7 @@ public class CustomStyledPlayerView extends StyledPlayerView implements GestureD
             exoErrorMessage.setOnClickListener(v -> {
                 if (PlayerActivity.locked) {
                     PlayerActivity.locked = false;
-                    Utils.showText(CustomStyledPlayerView.this, "", MESSAGE_TIMEOUT_LONG);
+                    Utils.showText(CustomPlayerView.this, "", MESSAGE_TIMEOUT_LONG);
                     setIconLock(false);
                 }
             });
@@ -136,7 +135,9 @@ public class CustomStyledPlayerView extends StyledPlayerView implements GestureD
 
                     if (restorePlayState) {
                         restorePlayState = false;
-                        PlayerActivity.player.play();
+                        if (PlayerActivity.player != null) {
+                            PlayerActivity.player.play();
+                        }
                     }
 
                     setControllerAutoShow(true);
@@ -256,12 +257,6 @@ public class CustomStyledPlayerView extends StyledPlayerView implements GestureD
                             PlayerActivity.player.seekTo(position);
                         }
                     }
-                    for (long start : PlayerActivity.chapterStarts) {
-                        if ((seekLastPosition < start && position >= start) || (seekLastPosition > start && position <= start)) {
-                            performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK);
-                        }
-                    }
-                    seekLastPosition = position;
                     String message = Utils.formatMilisSign(seekChange);
                     if (!isControllerFullyVisible()) {
                         message += "\n" + Utils.formatMilis(position);
@@ -351,6 +346,8 @@ public class CustomStyledPlayerView extends StyledPlayerView implements GestureD
             mScaleFactorFit = getScaleFit();
             canScale = true;
         }
+        ImageButton buttonAspectRatio = findViewById(Integer.MAX_VALUE - 100);
+        buttonAspectRatio.setImageResource(R.drawable.ic_fit_screen_24dp);
         hideController();
         return true;
     }
@@ -359,6 +356,13 @@ public class CustomStyledPlayerView extends StyledPlayerView implements GestureD
     public void onScaleEnd(ScaleGestureDetector scaleGestureDetector) {
         if (PlayerActivity.locked)
             return;
+        if (mScaleFactor - mScaleFactorFit < 0.001) {
+            setScale(1.f);
+            setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FIT);
+
+            ImageButton buttonAspectRatio = findViewById(Integer.MAX_VALUE - 100);
+            buttonAspectRatio.setImageResource(R.drawable.ic_aspect_ratio_24dp);
+        }
         if (PlayerActivity.player != null && !PlayerActivity.player.isPlaying()) {
             showController();
         }

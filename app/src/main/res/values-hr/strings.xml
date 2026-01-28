@@ -27,7 +27,7 @@
     <string name="pref_title">Postavke</string>
     <string name="shortcut_videos">Videozapisi</string>
     <string name="pref_repeat_toggle_summary">Dodatna kontrola koja omogućuje beskonačno ponavljanje videa (zahtijeva ponovno pokretanje programa)</string>
-    <string name="pref_repeat_toggle">Ponovi uključivanje/isključivanje</string>
+    <string name="pref_repeat_toggle">Prekidač za ponavljanje</string>
     <string name="button_open">Otvori</string>
     <string name="button_crop">Promijeni veličinu</string>
     <string name="button_pip">Slika-u-slici</string>
@@ -38,7 +38,23 @@
     <string name="mediastore_empty">Nije pronađena nijedna indeksirana video datoteka. Za pristup video datotekama u zadanom spremištu aktiviraj automatsko pretraživanje medija u postavkama sustava.</string>
     <string name="pref_captioning_preferences">Postavke titlova</string>
     <string name="pref_decoder_priority">Prioritet dekodera</string>
-    <string name="pref_decoder_priority_prefer_device">Daj prednost dekoderima uređaja</string>
+    <string name="pref_decoder_priority_prefer_device">Daj prednost dekoderima uređaja (standardno)</string>
     <string name="pref_decoder_priority_prefer_app">Daj prednost dekoderima programa</string>
     <string name="pref_decoder_priority_only_device">Samo dekoderi uređaja</string>
+    <string name="video_orientation_system">Usmjerenje uređaja</string>
+    <string name="pref_map_dv7">Dolby Vision profile 7 rezerva</string>
+    <string name="pref_map_dv7_on">Reproduciraj Dolby Vision profile 7 sadržaj na HDR ekranima</string>
+    <string name="pref_language_audio">Standardna audio traka</string>
+    <string name="pref_language_track_default">Standardni</string>
+    <string name="pref_language_track_device">Jezik uređaja</string>
+    <string name="pref_dangerous_header">Opasno ⚠️</string>
+    <string name="pref_map_dv7_off">Reproduciraj UHD Blu-ray sadržaj koji sadrži Dolby Vision kakav je</string>
+    <string name="pref_dangerous_warning">Mijenjanje opcija u ovoj kategoriji može prekinuti reprodukciju uobičajeno kompatibilnog sadržaja</string>
+    <string name="pref_subtitle_style_embedded">Ugrađeni stilovi</string>
+    <string name="pref_subtitle_style_embedded_on">Primijeni ugrađene stilove titlova</string>
+    <string name="pref_subtitle_style_embedded_off">Nemoj primijeniti ugrađene stilove titlova</string>
+    <string name="pref_subtitle_style_bold_off">Koristi osnovni stil fonta</string>
+    <string name="pref_subtitle_header">Titl</string>
+    <string name="pref_subtitle_style_bold">Podebljani stil</string>
+    <string name="pref_subtitle_style_bold_on">Koristi podebljani stil fonta kao osnovni</string>
 </resources>

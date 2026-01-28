@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_enabled="true" android:state_pressed="true">
+        <shape android:shape="oval">
+            <solid android:color="#FF4169E1"/>  <!-- Same blue as our focus color -->
+            <stroke
+                android:width="2dp"
+                android:color="#FFFFFF"/>        <!-- White border -->
+            <size
+                android:width="20dp"
+                android:height="20dp"/>
+        </shape>
+    </item>
+    <item android:state_enabled="true" android:state_focused="true">
+        <shape android:shape="oval">
+            <solid android:color="#FF4169E1"/>
+            <stroke
+                android:width="2dp"
+                android:color="#FFFFFF"/>
+            <size
+                android:width="20dp"
+                android:height="20dp"/>
+        </shape>
+    </item>
+    <item android:state_enabled="true">
+        <shape android:shape="oval">
+            <solid android:color="#FFFFFF"/>     <!-- White when not focused -->
+            <size
+                android:width="12dp"
+                android:height="12dp"/>
+        </shape>
+    </item>
+</selector> 
